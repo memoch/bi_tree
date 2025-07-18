@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <title>BI TREE</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #f5f7fa, #e4e9f0);
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    #searchPanel {
+      margin: 20px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      background: #ffffff;
+      padding: 10px 15px;
+      border-radius: 25px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    #searchInput {
+      padding: 10px 15px;
+      font-size: 14px;
+      border: 1px solid #d1d9e6;
+      border-radius: 20px;
+      outline: none;
+      transition: border-color 0.3s, box-shadow 0.3s;
+      flex-grow: 1;
+    }
+    #searchInput:focus {
+      border-color: #4a90e2;
+      box-shadow: 0 0 5px rgba(74, 144, 226, 0.3);
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 14px;
+      border: none;
+      border-radius: 20px;
+      background: linear-gradient(45deg, #4a90e2, #63b3ed);
+      color: white;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.2s;
+    }
+    button:hover {
+      background: linear-gradient(45deg, #357ab7, #4a90e2);
+      transform: translateY(-1px);
+    }
+    button:active {
+      transform: translateY(0);
+    }
+    svg {
+      border: 1px solid #e0e6ed;
+      background: #ffffff;
+      margin: 20px;
+      border-radius: 12px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+      width: calc(100vw - 40px);
+      height: calc(100vh - 60px);
+      margin: 20px 20px 40px 20px;
+    }
+    .node {
+      cursor: pointer;
+    }
+    .node text {
+      user-select: none;
+      transition: fill-opacity 0.3s;
+    }
+    .link {
+      fill: none;
+      stroke-width: 2px;
+      stroke: #b0bec5;
+      transition: stroke 0.3s;
+    }
+    .extra-link {
+      fill: none;
+      stroke-width: 2px;
+      stroke: #b0bec5;
+      stroke-dasharray: 3,3;
+    }
+    .name-box-group {
+      display: flex;
+      align-items: center;
+    }
+    .name-box {
+      stroke: #d1d9e6;
+      stroke-width: 1;
+      rx: 8px;
+      fill: #ffffff;
+      transition: fill 0.3s;
+    }
+    .category-icon {
+      font-size: 14px;
+      fill: #000000;
+      transition: fill 0.3s;
+    }
+    .name-text {
+      font-size: 12px;
+      fill: #333;
+    }
+    .info-icon {
+      font-size: 14px;
+      fill: #6c757d;
+      cursor: pointer;
+      transition: fill 0.3s;
+    }
+    .info-icon:hover {
+      fill: #4a90e2;
+    }
+    .info-icon-circle {
+      fill-opacity: 0.2;
+      stroke: none;
+      pointer-events: all;
+    }
+    .child-indicator {
+      cursor: pointer;
+      transition: fill 0.3s, stroke 0.3s;
+    }
+    .tooltip-panel {
+      background: #ffffff;
+      border: 1px solid #d1d9e6;
+      border-radius: 10px;
+      padding: 15px;
+      width: 400px;
+      max-height: 600px;
+      overflow-x: auto;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #6c757d #f8f9fa;
+      pointer-events: auto;
+      font-size: 14px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+      opacity: 0.95;
+      animation: slideDown 0.3s ease-out;
+    }
+    .tooltip-panel::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    .tooltip-panel::-webkit-scrollbar-track {
+      background: #f8f9fa;
+    }
+    .tooltip-panel::-webkit-scrollbar-thumb {
+      background: #6c757d;
+      border-radius: 4px;
+    }
+    @keyframes slideDown {
+      from { transform: translateY(-10px); opacity: 0; }
+      to { transform: translateY(0); opacity: 0.95; }
+    }
+    .tooltip-panel h3 {
+      margin: 0 0 12px 0;
+      font-size: 16px;
+      color: #333;
+      border-bottom: 1px solid #e0e6ed;
+      padding-bottom: 8px;
+    }
+    .tooltip-panel pre {
+      background: #f8f9fa;
+      border: 1px solid #e0e6ed;
+      padding: 12px;
+      font-size: 12px;
+      margin: 0;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      border-radius: 6px;
+      line-height: 1.4;
+      max-height: 570px;
+      overflow-x: auto;
+      overflow-y: auto;
+    }
+    .tooltip-panel pre::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    .tooltip-panel pre::-webkit-scrollbar-track {
+      background: #f8f9fa;
+    }
+    .tooltip-panel pre::-webkit-scrollbar-thumb {
+      background: #6c757d;
+      border-radius: 4px;
+    }
+    .tooltip-panel code {
+      font-family: 'Courier New', Courier, monospace;
+    }
+    .sql-keyword { color: #d81b60; }
+    .sql-string { color: #c62828; }
+    .sql-comment { color: #388e3c; }
+    .tooltip-line {
+      fill: none;
+      stroke: #6c757d;
+      stroke-width: 1.5px;
+      stroke-dasharray: 3,3;
+    }
+  </style>
+</head>
+<body>
+<div id="searchPanel">
+  <input type="file" id="fileInput" accept=".txt" style="margin-bottom: 10px;" />
+  <input id="searchInput" list="id-list" placeholder="ID veya İsim Ara..." autocomplete="off" />
+  <datalist id="id-list"></datalist>
+  <button id="searchBtn">Ara</button>
+  <button id="centerBtn">Merkeze Al</button>
+  <button id="resetBtn">Sıfırla</button>
+</div>
+
+<div style="width: 100vw; height: 100vh;">
+  <svg width="100%" height="100%"></svg>
+</div>
+
+<script>
+  const categoryIcons = {
+    Project: '\u25A0',
+    WorkFlow: '\u25B6',
+    Job: '\u25CF',
+    DataFlow: '\u21D2',
+    Script: '\u2699'
+  };
+  const categoryColors = {
+    Project: "#e57373",
+    WorkFlow: "#64b5f6",
+    Job: "#ba68c8",
+    DataFlow: "#81c784",
+    Script: "#ff9800"
+  };
+
+  let flatData = [];
+  let initialTreeData = null;
+  const fileInput = document.getElementById("fileInput");
+
+  function loadData(callback) {
+    if (fileInput.files.length > 0) {
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          flatData = JSON.parse(e.target.result);
+          callback();
+        } catch (err) {
+          alert("Dosya okunamadı veya JSON formatı hatalı: " + err.message);
+        }
+      };
+      reader.readAsText(file);
+    } else {
+      alert("Lütfen data.txt dosyasını yükleyin.");
+    }
+  }
+
+  function initializeTree() {
+    if (flatData.length === 0) {
+      alert("Veri yüklenmedi. Lütfen bir dosya seçin.");
+      return;
+    }
+
+    let currentRootId = null;
+    let activeTooltip = null;
+
+    function buildTreeData(rootId = null) {
+      let primaryLinks = flatData.map(d => ({
+        id: d.object_id,
+        parent: d.parents.length ? d.parents[0] : null,
+        desc: d.desc,
+        category: d.category,
+        name: d.object_name
+      }));
+
+      if (rootId) {
+        const includedIds = new Set();
+        function collectDescendants(id) {
+          includedIds.add(id);
+          flatData.forEach(d => {
+            if (d.parents.includes(id)) collectDescendants(d.object_id);
+          });
+        }
+        collectDescendants(rootId);
+        primaryLinks = primaryLinks.filter(d => includedIds.has(d.id) || d.id === rootId);
+        const rootLink = primaryLinks.find(d => d.id === rootId);
+        if (rootLink) rootLink.parent = null;
+      }
+
+      let treeData;
+      try {
+        treeData = d3.stratify()
+          .id(d => d.id)
+          .parentId(d => d.parent)(primaryLinks);
+      } catch (err) {
+        alert("Ağaç oluşturulurken hata oluştu: " + err.message);
+        return null;
+      }
+
+      treeData.x0 = 450;
+      treeData.y0 = 0;
+      return treeData;
+    }
+
+    const svg = d3.select("svg"),
+          width = +svg.attr("width"),
+          height = +svg.attr("height");
+
+    const g = svg.append("g").attr("transform", "translate(100,50)");
+
+    const zoom = d3.zoom()
+      .scaleExtent([0.2, 3])
+      .on("zoom", (event) => {
+        g.attr("transform", event.transform);
+        if (activeTooltip) updateTooltipPosition(activeTooltip.node, activeTooltip.group);
+      });
+    svg.call(zoom);
+
+    const treeLayout = d3.tree().nodeSize([40, 200]);
+
+    const parentMap = new Map();
+    flatData.forEach(d => parentMap.set(d.object_id, d.parents));
+
+    const extraLinksRaw = flatData.flatMap(d => {
+      if (d.parents.length <= 1) return [];
+      return d.parents.slice(1).map(p => ({
+        sourceId: p,
+        targetId: d.object_id,
+        nodeId: d.object_id
+      }));
+    });
+
+    function collapse(d) {
+      if (d.children) {
+        d._children = d.children;
+        d._children.forEach(collapse);
+        d.children = null;
+      }
+    }
+
+    function expandParents(id) {
+      const parents = parentMap.get(id) || [];
+      parents.forEach(pid => {
+        const allNodes = g.selectAll("g.node").data();
+        const pNode = allNodes.find(n => n.data.id === pid);
+        if (pNode && pNode._children) {
+          pNode.children = pNode._children;
+          pNode._children = null;
+        }
+      });
+    }
+
+    function updateTooltipPosition(node, group) {
+      if (!group) return;
+      const panel = group.select(".tooltip-panel");
+      const line = group.select(".tooltip-line");
+      const fo = group.select("foreignObject");
+      const fixedGap = 10; // Maximum 10px gap from Script object's box
+      let nodeX = node.y, nodeY = node.x;
+      const transform = g.attr("transform");
+      const [, tx, ty] = transform.match(/translate\((-?\d+\.?\d*),(-?\d+\.?\d*)\)/) || [null, 0, 0];
+      const scale = transform.match(/scale\((-?\d+\.?\d*)\)/)?.[1] || 1;
+      nodeX = nodeX * scale + parseFloat(tx);
+      nodeY = nodeY * scale + parseFloat(ty);
+      // Position tooltip exactly 10px to the right of the Script object's box
+      let panelX = nodeX + (node.boxWidth + fixedGap) * scale;
+      let panelY = nodeY - 12 * scale; // Vertically align with node
+      const maxX = width - 400 - 20; // Keep within SVG bounds
+      const maxY = height - 600 - 20;
+      panelX = Math.min(Math.max(panelX, 20), maxX);
+      panelY = Math.min(Math.max(panelY, 20), maxY);
+      fo.attr("x", panelX / scale).attr("y", panelY / scale);
+      // Line from info icon (right edge of box) to tooltip's top-left corner
+      line.attr("d", `M${(nodeX + node.boxWidth) / scale},${nodeY / scale} L${panelX / scale},${panelY / scale}`);
+    }
+
+    let i = 0;
+    let isTransitioning = false;
+
+    function update(source, treeData) {
+      isTransitioning = true;
+      const duration = 600;
+
+      const root = treeLayout(treeData);
+      const nodes = root.descendants();
+      const links = root.links();
+
+      const categoryIconWidth = 14;
+      const infoIconWidth = 14;
+      const padding = 10;
+      const minGap = 60;
+
+      nodes.forEach(d => {
+        const tempText = g.append("text").text(d.data.name).style("font", "12px 'Segoe UI'").node();
+        d.nameLength = tempText.getComputedTextLength();
+        tempText.remove();
+        d.hasDesc = d.data.category === "Script" && !!d.data.desc;
+        d.boxWidth = categoryIconWidth + padding + d.nameLength + padding + (d.hasDesc ? infoIconWidth : 0);
+      });
+
+      const parentBoxWidths = new Map();
+      nodes.forEach(d => {
+        if (d.children || d._children) {
+          const childNodes = (d.children || d._children || []).map(c => c);
+          if (childNodes.length > 0) {
+            const maxWidth = Math.max(...childNodes.map(c => categoryIconWidth + padding + c.nameLength + padding + (c.hasDesc ? infoIconWidth : 0)));
+            parentBoxWidths.set(d.data.id, maxWidth);
+          }
+        }
+      });
+
+      nodes.forEach(d => {
+        if (d.parent && parentBoxWidths.has(d.parent.data.id)) {
+          d.boxWidth = parentBoxWidths.get(d.parent.data.id);
+        }
+        const circleGap = d.boxWidth / 20;
+        d.childIndicatorOffset = d.boxWidth + circleGap;
+        const dynamicGap = Math.max(minGap, d.boxWidth / 5);
+        d.y = d.parent ? d.parent.y + d.parent.childIndicatorOffset + dynamicGap : d.y;
+      });
+
+      const node = g.selectAll("g.node")
+        .data(nodes, d => d.id || (d.id = ++i));
+
+      const nodeEnter = node.enter().append("g")
+        .attr("class", "node")
+        .attr("data-id", d => d.data.id)
+        .attr("transform", d => `translate(${source.y0},${source.x0})`)
+        .on("click", (event, d) => {
+          if (isTransitioning) return;
+          if (d.children) {
+            collapse(d);
+            d.children = null;
+          } else if (d._children) {
+            d.children = d._children;
+            d._children = null;
+            expandParents(d.data.id);
+          }
+          update(d, treeData);
+        });
+
+      const nameBox = nodeEnter.append("g")
+        .attr("class", "name-box-group");
+
+      nameBox.append("rect")
+        .attr("class", "name-box")
+        .attr("x", -categoryIconWidth)
+        .attr("y", -12)
+        .attr("width", d => d.boxWidth)
+        .attr("height", 24);
+
+      nameBox.append("text")
+        .attr("class", "category-icon")
+        .attr("x", -categoryIconWidth + 2)
+        .attr("dy", "0.35em")
+        .text(d => categoryIcons[d.data.category] || "●");
+
+      nameBox.append("text")
+        .attr("class", "name-text")
+        .attr("x", padding)
+        .attr("dy", "0.35em")
+        .text(d => d.data.name)
+        .style("font-weight", d => d.children ? "bold" : "normal");
+
+      const infoGroup = nameBox.filter(d => d.data.category === "Script").append("g")
+        .attr("class", "info-icon-group");
+
+      infoGroup.append("circle")
+        .attr("class", "info-icon-circle")
+        .attr("cx", d => d.boxWidth - infoIconWidth - 5)
+        .attr("cy", 0)
+        .attr("r", 10)
+        .style("fill", d => categoryColors[d.data.category]);
+
+      infoGroup.append("text")
+        .attr("class", "info-icon")
+        .attr("x", d => d.boxWidth - infoIconWidth - 5)
+        .attr("dy", "0.35em")
+        .attr("text-anchor", "middle")
+        .text("\u2139")
+        .on("click", (event, d) => {
+          event.stopPropagation();
+          if (activeTooltip) {
+            activeTooltip.group.remove();
+            activeTooltip = null;
+          }
+          if (d.data.desc) {
+            const formattedDesc = d.data.desc
+              .replace(/(SELECT|FROM|WHERE|INSERT|INTO|TRUNCATE|TABLE|PARTITION|ORDER BY|AS|OVER|ROW_NUMBER)/gi, '<span class="sql-keyword">$1</span>')
+              .replace(/('[^']*')/g, '<span class="sql-string">$1</span>')
+              .replace(/(\/\/.*$|\/\*[\s\S]*?\*\/)/gm, '<span class="sql-comment">$1</span>');
+
+            const group = g.append("g")
+              .attr("class", "tooltip-group")
+              .attr("data-id", d.data.id);
+
+            group.append("path")
+              .attr("class", "tooltip-line");
+
+            group.append("foreignObject")
+              .attr("width", 400)
+              .attr("height", 600)
+              .html(`
+                <div class="tooltip-panel">
+                  <h3>${d.data.name}</h3>
+                  <pre><code>${formattedDesc}</code></pre>
+                </div>
+              `);
+
+            activeTooltip = { node: d, group };
+            updateTooltipPosition(d, group);
+          }
+        });
+
+      nodeEnter.append("circle")
+        .attr("class", "child-indicator")
+        .attr("r", 10)
+        .attr("cx", d => d.childIndicatorOffset)
+        .attr("cy", 0)
+        .style("fill", d => d._children || d.children ? categoryColors[d.data.category] : "none")
+        .style("stroke", d => d._children || d.children ? categoryColors[d.data.category] : categoryColors[d.data.category] || "#b0bec5")
+        .on("click", (event, d) => {
+          event.stopPropagation();
+          if (isTransitioning) return;
+          if (d.children) {
+            collapse(d);
+            d.children = null;
+          } else if (d._children) {
+            d.children = d._children;
+            d._children = null;
+            expandParents(d.data.id);
+          }
+          update(d, treeData);
+        });
+
+      const nodeUpdate = nodeEnter.merge(node);
+
+      nodeUpdate.transition()
+        .duration(duration)
+        .attr("transform", d => `translate(${d.y},${d.x})`)
+        .on("end", () => {
+          drawExtraLinks(nodes);
+          if (activeTooltip) updateTooltipPosition(activeTooltip.node, activeTooltip.group);
+          isTransitioning = false;
+        });
+
+      nodeUpdate.select(".name-box")
+        .attr("x", -categoryIconWidth)
+        .attr("y", -12)
+        .attr("width", d => d.boxWidth)
+        .attr("height", 24);
+
+      nodeUpdate.select(".category-icon")
+        .attr("x", -categoryIconWidth + 2);
+
+      nodeUpdate.select(".name-text")
+        .attr("x", padding)
+        .text(d => d.data.name)
+        .style("font-weight", d => d.children ? "bold" : "normal");
+
+      nodeUpdate.select(".info-icon-circle")
+        .attr("cx", d => d.boxWidth - infoIconWidth - 5)
+        .style("fill", d => categoryColors[d.data.category]);
+
+      nodeUpdate.select(".info-icon")
+        .attr("x", d => d.boxWidth - infoIconWidth - 5);
+
+      nodeUpdate.select(".child-indicator")
+        .attr("r", 10)
+        .attr("cx", d => d.childIndicatorOffset)
+        .style("fill", d => d._children || d.children ? categoryColors[d.data.category] : "none")
+        .style("stroke", d => d._children || d.children ? categoryColors[d.data.category] : categoryColors[d.data.category] || "#b0bec5");
+
+      const nodeExit = node.exit().transition()
+        .duration(duration)
+        .attr("transform", d => `translate(${source.y},${source.x})`)
+        .remove();
+
+      nodeExit.select(".name-box").attr("width", 0);
+      nodeExit.select("text").style("fill-opacity", 1e-6);
+
+      const link = g.selectAll("path.link")
+        .data(links, d => d.target.id + d.source.id);
+
+      const linkEnter = link.enter().insert("path", "g")
+        .attr("class", "link")
+        .attr("d", d => {
+          const s = { x: source.x, y: source.y + (source.childIndicatorOffset || 0) };
+          const t = { x: d.target.x, y: d.target.y - categoryIconWidth };
+          return diagonal({ source: s, target: t });
+        });
+
+      linkEnter.merge(link).transition()
+        .duration(duration)
+        .attr("d", d => {
+          const s = { x: d.source.x, y: d.source.y + d.source.childIndicatorOffset };
+          const t = { x: d.target.x, y: d.target.y - categoryIconWidth };
+          return diagonal({ source: s, target: t });
+        })
+        .style("stroke", d => categoryColors[d.target.data.category] || "#b0bec5");
+
+      link.exit().transition()
+        .duration(duration)
+        .attr("d", d => {
+          const o = { x: source.x, y: source.y };
+          return diagonal({ source: o, target: o });
+        })
+        .remove();
+
+      nodes.forEach(d => {
+        d.x0 = d.x;
+        d.y0 = d.y;
+      });
+    }
+
+    function drawExtraLinks(nodes) {
+      const nodeMap = Object.fromEntries(nodes.map(n => [n.data.id, n]));
+      const filteredExtraLinks = extraLinksRaw.filter(l => nodeMap[l.sourceId] && nodeMap[l.targetId]);
+
+      const extraLink = g.selectAll("path.extra-link")
+        .data(filteredExtraLinks, d => d.sourceId + "->" + d.targetId);
+
+      extraLink.join(
+        enter => enter.append("path")
+          .attr("class", "extra-link")
+          .attr("d", d => {
+            const s = nodeMap[d.sourceId], t = nodeMap[d.targetId];
+            if (!s || !t) return "";
+            const sPoint = { x: s.x, y: s.y + s.childIndicatorOffset };
+            const tPoint = { x: t.x, y: t.y - 14 };
+            return diagonal({ source: sPoint, target: tPoint });
+          })
+          .style("stroke", d => categoryColors[nodeMap[d.targetId].data.category] || "#b0bec5")
+          .style("stroke-dasharray", "3,3"),
+        update => update.transition().duration(600)
+          .attr("d", d => {
+            const s = nodeMap[d.sourceId], t = nodeMap[d.targetId];
+            if (!s || !t) return "";
+            const sPoint = { x: s.x, y: s.y + s.childIndicatorOffset };
+            const tPoint = { x: t.x, y: t.y - 14 };
+            return diagonal({ source: sPoint, target: tPoint });
+          })
+          .style("stroke", d => categoryColors[nodeMap[d.targetId].data.category] || "#b0bec5")
+          .style("stroke-dasharray", "3,3"),
+        exit => exit.remove()
+      );
+    }
+
+    function diagonal(d) {
+      return `M${d.source.y},${d.source.x}
+              C${(d.source.y + d.target.y) / 2},${d.source.x}
+               ${(d.source.y + d.target.y) / 2},${d.target.x}
+               ${d.target.y},${d.target.x}`;
+    }
+
+    document.body.addEventListener("click", (event) => {
+      if (activeTooltip && !event.target.closest(".tooltip-panel") && !event.target.classList.contains("info-icon")) {
+        activeTooltip.group.remove();
+        activeTooltip = null;
+      }
+    });
+
+    const searchInput = document.getElementById("searchInput");
+    const searchBtn = document.getElementById("searchBtn");
+    const centerBtn = document.getElementById("centerBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const datalist = document.getElementById("id-list");
+
+    function populateDatalist() {
+      datalist.innerHTML = "";
+      flatData.forEach(d => {
+        const option = document.createElement("option");
+        option.value = `${d.object_name} (${d.object_id})`;
+        option.setAttribute("data-id", d.object_id);
+        datalist.appendChild(option);
+      });
+    }
+
+    function openAllRelatedNodes(id) {
+      if (!id) return;
+      function recursiveCollapse(d) {
+        if (d.children) {
+          d.children.forEach(recursiveCollapse);
+          collapse(d);
+          d.children = null;
+        }
+      }
+      recursiveCollapse(treeData);
+      const toOpen = new Set();
+      function addWithParents(nodeId) {
+        if (!toOpen.has(nodeId)) {
+          toOpen.add(nodeId);
+          const parents = parentMap.get(nodeId) || [];
+          parents.forEach(p => addWithParents(p));
+        }
+      }
+      addWithParents(id);
+      function recursiveOpen(d) {
+        if (toOpen.has(d.data.id)) {
+          if (d._children) {
+            d.children = d._children;
+            d._children = null;
+          }
+          if (d.children) d.children.forEach(recursiveOpen);
+        } else if (d.children) {
+          d.children.forEach(recursiveOpen);
+        }
+      }
+      recursiveOpen(treeData);
+    }
+
+    searchBtn.addEventListener("click", () => {
+      const val = searchInput.value.trim();
+      if (!val) return alert("Lütfen aramak için bir ID veya isim girin.");
+      let selectedId = null;
+      const selectedOption = Array.from(datalist.options).find(opt => opt.value === val);
+      if (selectedOption) selectedId = selectedOption.getAttribute("data-id");
+      else {
+        const found = flatData.find(d => d.object_id === val || d.object_name === val);
+        if (found) selectedId = found.object_id;
+      }
+      if (!selectedId || !flatData.find(d => d.object_id === selectedId)) return alert("ID veya isim bulunamadı.");
+      openAllRelatedNodes(selectedId);
+      update(treeData, treeData);
+    });
+
+    centerBtn.addEventListener("click", () => {
+      const val = searchInput.value.trim();
+      if (!val) return alert("Lütfen merkeze almak için bir ID veya isim seçin.");
+      let selectedId = null;
+      const selectedOption = Array.from(datalist.options).find(opt => opt.value === val);
+      if (selectedOption) selectedId = selectedOption.getAttribute("data-id");
+      else {
+        const found = flatData.find(d => d.object_id === val || d.object_name === val);
+        if (found) selectedId = found.object_id;
+      }
+      if (!selectedId || !flatData.find(d => d.object_id === selectedId)) return alert("ID veya isim bulunamadı.");
+      currentRootId = selectedId;
+      const newTreeData = buildTreeData(currentRootId);
+      if (newTreeData) {
+        g.selectAll("*").remove();
+        treeData = newTreeData;
+        if (treeData.children) treeData.children.forEach(collapse);
+        update(treeData, treeData);
+      }
+    });
+
+    resetBtn.addEventListener("click", () => {
+      currentRootId = null;
+      g.selectAll("*").remove();
+      treeData = buildTreeData();
+      if (treeData) {
+        if (treeData.children) treeData.children.forEach(collapse);
+        update(treeData, treeData);
+        svg.call(zoom.transform, d3.zoomIdentity.translate(100, 50).scale(1));
+      }
+    });
+
+    populateDatalist();
+    let treeData = buildTreeData();
+    if (treeData) {
+      if (treeData.children) treeData.children.forEach(collapse);
+      initialTreeData = treeData;
+      update(treeData, treeData);
+    }
+  }
+
+  fileInput.addEventListener("change", () => loadData(initializeTree));
+</script>
+</body>
+</html>
