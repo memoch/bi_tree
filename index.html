@@ -117,131 +117,6 @@
     }
     .child-indicator {
       cursor: pointer;
-      transition: fill 
-
-System: * The user's message was cut off. Based on the conversation history, they are requesting a modification to the `updateTooltipPosition` function in the provided HTML file to ensure the tooltip panel for Script category objects is positioned approximately 10 pixels to the right of the info button (`ℹ`) and vertically aligned with it, so it doesn't appear below the object's box. I'll provide the complete HTML file with the updated `updateTooltipPosition` function, ensuring the panel's top-left corner is 10px to the right of the info button’s right edge and vertically centered with the info button. The rest of the code remains unchanged, and I'll reuse the same artifact ID since this is an update to the previous artifact. The response will be wrapped in the required `<xaiArtifact>` tag.
-
-<xaiArtifact artifact_id="9d3ff507-c169-4dba-9e16-834d59a0ccfb" artifact_version_id="d6f31157-d3c9-4120-bd67-568d6f6b897e" title="index.html" contentType="text/html">
-```html
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-  <meta charset="UTF-8" />
-  <title>BI TREE</title>
-  <script src="https://d3js.org/d3.v7.min.js"></script>
-  <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #f5f7fa, #e4e9f0);
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-    }
-    #searchPanel {
-      margin: 20px;
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      background: #ffffff;
-      padding: 10px 15px;
-      border-radius: 25px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-    #searchInput {
-      padding: 10px 15px;
-      font-size: 14px;
-      border: 1px solid #d1d9e6;
-      border-radius: 20px;
-      outline: none;
-      transition: border-color 0.3s, box-shadow 0.3s;
-      flex-grow: 1;
-    }
-    #searchInput:focus {
-      border-color: #4a90e2;
-      box-shadow: 0 0 5px rgba(74, 144, 226, 0.3);
-    }
-    button {
-      padding: 10px 20px;
-      font-size: 14px;
-      border: none;
-      border-radius: 20px;
-      background: linear-gradient(45deg, #4a90e2, #63b3ed);
-      color: white;
-      cursor: pointer;
-      transition: background 0.3s, transform 0.2s;
-    }
-    button:hover {
-      background: linear-gradient(45deg, #357ab7, #4a90e2);
-      transform: translateY(-1px);
-    }
-    button:active {
-      transform: translateY(0);
-    }
-    svg {
-      border: 1px solid #e0e6ed;
-      background: #ffffff;
-      margin: 20px;
-      border-radius: 12px;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
-      width: calc(100vw - 40px);
-      height: calc(100vh - 60px);
-      margin: 20px 20px 40px 20px;
-    }
-    .node {
-      cursor: pointer;
-    }
-    .node text {
-      user-select: none;
-      transition: fill-opacity 0.3s;
-    }
-    .link {
-      fill: none;
-      stroke-width: 2px;
-      stroke: #b0bec5;
-      transition: stroke 0.3s;
-    }
-    .extra-link {
-      fill: none;
-      stroke-width: 2px;
-      stroke: #b0bec5;
-      stroke-dasharray: 3,3;
-    }
-    .name-box-group {
-      display: flex;
-      align-items: center;
-    }
-    .name-box {
-      stroke: #d1d9e6;
-      stroke-width: 1;
-      rx: 8px;
-      fill: #ffffff;
-      transition: fill 0.3s;
-    }
-    .category-icon {
-      font-size: 14px;
-      fill: #000000;
-      transition: fill 0.3s;
-    }
-    .name-text {
-      font-size: 12px;
-      fill: #333;
-    }
-    .info-icon {
-      font-size: 14px;
-      fill: #6c757d;
-      cursor: pointer;
-      transition: fill 0.3s;
-    }
-    .info-icon:hover {
-      fill: #4a90e2;
-    }
-    .info-icon-circle {
-      fill-opacity: 0.2;
-      stroke: none;
-      pointer-events: all;
-    }
-    .child-indicator {
-      cursor: pointer;
       transition: fill 0.3s, stroke 0.3s;
     }
     .tooltip-panel {
@@ -283,7 +158,7 @@ System: * The user's message was cut off. Based on the conversation history, the
       border-bottom: 1px solid #e0e6ed;
       padding-bottom: 8px;
     }
-    .tooltip-panel pre {
+    .tooltip-panel div.sql-content {
       background: #f8f9fa;
       border: 1px solid #e0e6ed;
       padding: 12px;
@@ -296,20 +171,18 @@ System: * The user's message was cut off. Based on the conversation history, the
       max-height: 570px;
       overflow-x: auto;
       overflow-y: auto;
+      font-family: 'Courier New', Courier, monospace;
     }
-    .tooltip-panel pre::-webkit-scrollbar {
+    .tooltip-panel div.sql-content::-webkit-scrollbar {
       width: 8px;
       height: 8px;
     }
-    .tooltip-panel pre::-webkit-scrollbar-track {
+    .tooltip-panel div.sql-content::-webkit-scrollbar-track {
       background: #f8f9fa;
     }
-    .tooltip-panel pre::-webkit-scrollbar-thumb {
+    .tooltip-panel div.sql-content::-webkit-scrollbar-thumb {
       background: #6c757d;
       border-radius: 4px;
-    }
-    .tooltip-panel code {
-      font-family: 'Courier New', Courier, monospace;
     }
     .sql-keyword { color: #d81b60; }
     .sql-string { color: #c62828; }
@@ -480,10 +353,11 @@ System: * The user's message was cut off. Based on the conversation history, the
       const nodeY = 0;
       const boxWidth = node.boxWidth; // Width of the node’s box
       const infoIconX = boxWidth - infoIconWidth - 5; // Position of info button
+      const childIndicatorX = node.childIndicatorOffset; // Position of child indicator
       const scale = parseFloat(g.attr("transform").match(/scale\((-?\d+\.?\d*)\)/)?.[1] || 1);
 
-      // Position tooltip 10px to the right of the info button’s right edge
-      let panelX = infoIconX + infoIconWidth + fixedGap;
+      // Position tooltip 10px to the right of the info button, ensuring it’s at least to the right of child-indicator
+      let panelX = Math.max(infoIconX + infoIconWidth + fixedGap, childIndicatorX + fixedGap);
       let panelY = 0; // Align vertically with info button’s center
       const panelWidth = 400;
       const panelHeight = 600;
@@ -633,7 +507,7 @@ System: * The user's message was cut off. Based on the conversation history, the
               .html(`
                 <div class="tooltip-panel">
                   <h3>${d.data.name}</h3>
-                  <pre><code>${formattedDesc}</code></pre>
+                  <div class="sql-content">${formattedDesc}</div>
                 </div>
               `);
 
